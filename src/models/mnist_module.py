@@ -5,10 +5,10 @@ from pytorch_lightning import LightningModule
 from torchmetrics import MaxMetric
 from torchmetrics.classification.accuracy import Accuracy
 
-from src.models.modules.simple_dense_net import SimpleDenseNet
+from src.models.components.simple_dense_net import SimpleDenseNet
 
 
-class MNISTLitModel(LightningModule):
+class MNISTLitModule(LightningModule):
     """
     Example of LightningModule for MNIST classification.
 
@@ -25,11 +25,7 @@ class MNISTLitModel(LightningModule):
 
     def __init__(
         self,
-        input_size: int = 784,
-        lin1_size: int = 256,
-        lin2_size: int = 256,
-        lin3_size: int = 256,
-        output_size: int = 10,
+        net: torch.nn.Module,
         lr: float = 0.001,
         weight_decay: float = 0.0005,
     ):
@@ -39,7 +35,7 @@ class MNISTLitModel(LightningModule):
         # it also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
 
-        self.model = SimpleDenseNet(hparams=self.hparams)
+        self.net = net
 
         # loss function
         self.criterion = torch.nn.CrossEntropyLoss()
@@ -54,7 +50,7 @@ class MNISTLitModel(LightningModule):
         self.val_acc_best = MaxMetric()
 
     def forward(self, x: torch.Tensor):
-        return self.model(x)
+        return self.net(x)
 
     def step(self, batch: Any):
         x, y = batch
@@ -109,7 +105,7 @@ class MNISTLitModel(LightningModule):
         pass
 
     def on_epoch_end(self):
-        # reset metrics at the end of every epoch!
+        # reset metrics at the end of every epoch
         self.train_acc.reset()
         self.test_acc.reset()
         self.val_acc.reset()
